@@ -19,15 +19,16 @@ BUILDPACK_DIR="$(dirname $(dirname $0))"
 
 # config
 S3_BUCKET="ci-database-binary"
-POSTGRESQL_MAJOR_VERSION=10
+POSTGRESQL_MAJOR_VERSION=11
 if [ -f "$ENV_DIR/POSTGRESQL_VERSION" ]
 then
   POSTGRESQL_MAJOR_VERSION="$(cat $ENV_DIR/POSTGRESQL_VERSION)"
 fi
 
 case "$POSTGRESQL_MAJOR_VERSION" in
-  10)  POSTGRESQL_VERSION="10.1";;
-  9.6) POSTGRESQL_VERSION="9.6.6";;
+  11)  POSTGRESQL_VERSION="11.2";;
+  10)  POSTGRESQL_VERSION="10.7";;
+  9.6) POSTGRESQL_VERSION="9.6.12";;
   *)   POSTGRESQL_VERSION="$POSTGRESQL_MAJOR_VERSION";;
 esac
 
@@ -65,13 +66,15 @@ case $STACK in
     cedar-14) : ;;
     heroku-16) : ;;
     heroku-16-build) : ;;
+    heroku-18) ;;
+    heroku-18-build) ;;
     *) error "Unrecognized stack version: ${STACK}";;
 esac
 
 echo "Using stack version: ${STACK}" | indent
 
 # vendor directories
-VENDORED_POSTGRESQL="vendor/postgresql"
+VENDORED_POSTGRESQL=".indyno/vendor/postgresql"
 
 # vendor postgresql into the slug
 PATH="$BUILD_DIR/$VENDORED_POSTGRESQL/bin:$PATH"
@@ -80,9 +83,9 @@ mkdir -p "$BUILD_DIR/$VENDORED_POSTGRESQL"
 package_download "postgresql" "${POSTGRESQL_VERSION}" "${BUILD_DIR}/${VENDORED_POSTGRESQL}" "${STACK}"
 
 # setting .profile.d script for database startup
-echo "-----> Copying .profile.d/pg.sh to add postgresql binaries to PATH"
+echo "-----> Copying .profile.d/00-pg-path.sh to add postgresql binaries to PATH"
 mkdir -p $BUILD_DIR/.profile.d
-cat<<\EOF > $BUILD_DIR/.profile.d/pg-path.sh
-PATH=$HOME/vendor/postgresql/bin:$PATH
+cat<<\EOF > $BUILD_DIR/.profile.d/00-pg-path.sh
+PATH=$HOME/.indyno/vendor/postgresql/bin:$PATH
 
 echo "-----> postgresql done"
